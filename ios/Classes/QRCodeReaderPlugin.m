@@ -28,8 +28,8 @@ float portraitheight;
 
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
-    FlutterMethodChannel* channel = [FlutterMethodChannel 
-                                     methodChannelWithName:CHANNEL_NAME 
+    FlutterMethodChannel* channel = [FlutterMethodChannel
+                                     methodChannelWithName:CHANNEL_NAME
                                      binaryMessenger:[registrar messenger]];
     UIViewController *viewController =
     [UIApplication sharedApplication].delegate.window.rootViewController;
@@ -110,8 +110,33 @@ float portraitheight;
 
 }
 
+- (BOOL)startReading{
+  AVAuthorizationStatus status = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+  switch (status){
+    case AVAuthorizationStatusAuthorized:{
+      [self _startReading];
+      return YES;
+    }; break;
 
-- (BOOL)startReading {
+    case AVAuthorizationStatusNotDetermined:{
+      // seek access first:
+      [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
+        if(granted){
+          [self _startReading];
+        }
+      }];
+      return YES;
+    }; break;
+
+    case AVAuthorizationStatusDenied:
+    case AVAuthorizationStatusRestricted:
+    default:{
+      return NO;
+    }; break;
+  }
+}
+
+- (BOOL)_startReading {
     if (_isReading) return NO;
     _isReading = YES;
     NSError *error;
